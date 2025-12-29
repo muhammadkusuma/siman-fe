@@ -1,5 +1,9 @@
+<script setup>
+// Logic global bisa ditaruh disini
+</script>
+
 <template>
-  <p class="text-3xl font-bold text-blue-500">
-    Tailwind CSS berhasil 🎉
-  </p>
+  <div class="min-h-screen bg-gray-50 text-gray-900 font-sans">
+    <router-view />
+  </div>
 </template>
