@@ -14,7 +14,7 @@ const FacultyView = () => import('../views/master/FacultyView.vue')
 const MaintenanceView = () => import('../views/transactions/MaintenanceView.vue')
 const MutationView = () => import('../views/transactions/MutationView.vue')
 const AssetView = () => import('../views/assets/AssetView.vue')
-
+const ProfileView = () => import('../views/ProfileView.vue')
 
 // Layout dengan Sidebar & Navbar
 const MainLayout = () => import('../layouts/MainLayout.vue')
@@ -33,7 +33,16 @@ const routes = [
         path: '/dashboard',
         component: MainLayout,
         children: [
-            { path: '', name: 'dashboard', component: DashboardView }
+            {
+                path: '',
+                name: 'dashboard',
+                component: DashboardView
+            },
+            {
+                path: 'profile',
+                name: 'profile',
+                component: ProfileView
+            }
         ]
     },
 
@@ -45,7 +54,7 @@ const routes = [
         ]
     },
 
-        {
+    {
         path: '/assets',
         component: MainLayout,
         children: [
