@@ -8,9 +8,8 @@ const RegisterView = () => import('../views/auth/RegisterView.vue')
 // Views untuk Admin
 const DashboardView = () => import('../views/dashboard/DashboardView.vue')
 const AuditLogView = () => import('../views/AuditLogView.vue')
-const CategoryView = () => import('../views/master/CategoryView.vue') // <--- PENTING: Import ini harus ada
-
-// Import Layout Utama
+const CategoryView = () => import('../views/master/CategoryView.vue') 
+const BuildingView = () => import('../views/master/BuildingView.vue')
 const MainLayout = () => import('../layouts/MainLayout.vue')
 
 const routes = [
@@ -49,9 +48,11 @@ const routes = [
                 name: 'master-categories',
                 component: CategoryView
             },
-            // Nanti tambahkan rute master lainnya disini:
-            // { path: 'faculties', component: FacultyView },
-            // { path: 'buildings', component: BuildingView },
+            {
+                path: 'buildings',
+                name: 'master-buildings',
+                component: BuildingView
+            }
         ]
     },
 ]
