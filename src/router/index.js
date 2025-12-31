@@ -13,6 +13,8 @@ const BuildingView = () => import('../views/master/BuildingView.vue')
 const FacultyView = () => import('../views/master/FacultyView.vue')
 const MaintenanceView = () => import('../views/transactions/MaintenanceView.vue')
 const MutationView = () => import('../views/transactions/MutationView.vue')
+const AssetView = () => import('../views/assets/AssetView.vue')
+
 
 // Layout dengan Sidebar & Navbar
 const MainLayout = () => import('../layouts/MainLayout.vue')
@@ -40,6 +42,14 @@ const routes = [
         component: MainLayout,
         children: [
             { path: '', name: 'audit-logs', component: AuditLogView }
+        ]
+    },
+
+        {
+        path: '/assets',
+        component: MainLayout,
+        children: [
+            { path: '', name: 'assets', component: AssetView }
         ]
     },
 
