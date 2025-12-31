@@ -1,21 +1,21 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-// import axios from 'axios';
+import axios from 'axios'; // 1. Uncomment ini agar bisa request ke API
 
 const router = useRouter();
 
 // State Form Data
 const fullName = ref('');
 const email = ref('');
-const role = ref('Peminjam'); // Default value sesuai opsi pertama
+const role = ref('Peminjam');
 const username = ref('');
 const password = ref('');
 
 // State UI
 const isLoading = ref(false);
 const alertMessage = ref('');
-const alertType = ref(''); // 'success' atau 'error'
+const alertType = ref('');
 
 // Konfigurasi API
 const API_URL = 'http://localhost:3000';
@@ -26,17 +26,15 @@ const handleRegister = async () => {
     alertMessage.value = '';
 
     try {
-        // Payload sesuai dengan register.html baris 79-85
         const formData = {
             full_name: fullName.value,
             email: email.value,
             username: username.value,
             password: password.value,
             role: role.value
-            // department_id: null (Dilewatkan sementara sesuai komentar di HTML asli)
         };
 
-        // Request ke Backend
+        // 2. Perbaiki URL: Tambahkan '/api' sesuai route di backend (main.go)
         const response = await axios.post(`${API_URL}/register`, formData);
 
         // Jika Berhasil
