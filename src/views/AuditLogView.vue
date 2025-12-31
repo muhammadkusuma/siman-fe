@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import axios from 'axios'; // 1. FIX: Uncomment axios agar bisa request API
+import axios from 'axios';
 
 const logs = ref([]);
 const isLoading = ref(false);
@@ -9,7 +9,7 @@ const token = localStorage.getItem('token');
 
 // --- STATE PAGINASI ---
 const currentPage = ref(1);
-const itemsPerPage = 10; // Menampilkan 10 data per halaman
+const itemsPerPage = 5; // PERUBAHAN: Menampilkan 5 data per halaman
 
 // Helper: Format Tanggal
 const formatDate = (dateString) => {
@@ -37,11 +37,13 @@ const fetchLogs = async () => {
         const response = await axios.get(`${API_URL}/audit-logs`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        // Sesuai dengan audit_controller.go: c.JSON(..., gin.H{"data": logs})
+        // Pastikan response.data.data adalah array, jika null set ke []
         logs.value = response.data.data || [];
+
+        // Reset ke halaman 1 setiap kali fetch ulang
+        currentPage.value = 1;
     } catch (error) {
         console.error("Gagal mengambil data log:", error);
-        // Handle Token Expired
         if (error.response && error.response.status === 401) {
             window.location.href = '/login';
         }
@@ -71,7 +73,7 @@ const changePage = (page) => {
     }
 };
 
-// 4. Info Data (Menampilkan "1 - 10 dari 50 data")
+// 4. Info Data (Menampilkan "1 - 5 dari 20 data")
 const showingInfo = computed(() => {
     if (logs.value.length === 0) return '0 data';
     const start = (currentPage.value - 1) * itemsPerPage + 1;
