@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-// import axios from 'axios';
+import axios from 'axios'; // Pastikan axios sudah di-uncomment
 
 // --- STATE ---
 const isLoading = ref(false);
@@ -21,25 +21,26 @@ const passwordForm = ref({
     confirm_password: ''
 });
 
-const API_URL = 'http://localhost:3000/api';
+// Konfigurasi API
+const API_URL = 'http://localhost:3000/api'; // Endpoint group backend
 const token = localStorage.getItem('token');
 
 // --- ACTIONS ---
 
-// 1. Ambil Data User (Profile)
+// 1. Ambil Data User
 const fetchProfile = async () => {
     isLoading.value = true;
     try {
-        // Asumsi endpoint backend untuk ambil data user yg sedang login
-        // Sesuaikan endpoint ini dengan backend Anda (misal: /me, /profile, atau /users/current)
-        const response = await axios.get(`${API_URL}/me`, {
+        const response = await axios.get(`${API_URL}/profile`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-
         user.value = response.data.data || response.data;
     } catch (error) {
         console.error("Gagal load profile:", error);
-        alert("Gagal memuat data profil.");
+        if (error.response && error.response.status === 401) {
+            alert("Sesi habis, silakan login kembali.");
+            window.location.href = '/login';
+        }
     } finally {
         isLoading.value = false;
     }
@@ -49,19 +50,24 @@ const fetchProfile = async () => {
 const updateProfile = async () => {
     isSubmittingProfile.value = true;
     try {
-        await axios.put(`${API_URL}/profile`, {
+        // Payload harus sesuai dengan struct UpdateProfileInput di Go
+        const payload = {
             full_name: user.value.full_name,
             email: user.value.email,
             username: user.value.username
-        }, {
+        };
+
+        await axios.put(`${API_URL}/profile`, payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
         alert('Profil berhasil diperbarui!');
-        // Update nama di localStorage jika perlu
+        // Update localStorage agar nama di header berubah (jika header baca dari sini)
         localStorage.setItem('username', user.value.username);
+
     } catch (error) {
-        alert(error.response?.data?.error || 'Gagal update profil.');
+        const msg = error.response?.data?.error || 'Gagal update profil.';
+        alert(msg);
     } finally {
         isSubmittingProfile.value = false;
     }
@@ -69,37 +75,50 @@ const updateProfile = async () => {
 
 // 3. Ganti Password
 const changePassword = async () => {
+    // Validasi Frontend
     if (passwordForm.value.new_password !== passwordForm.value.confirm_password) {
         alert("Konfirmasi password baru tidak cocok!");
+        return;
+    }
+    if (passwordForm.value.new_password.length < 6) {
+        alert("Password minimal 6 karakter.");
         return;
     }
 
     isSubmittingPassword.value = true;
     try {
-        await axios.put(`${API_URL}/change-password`, {
+        // Payload sesuai struct ChangePasswordInput di Go
+        const payload = {
             current_password: passwordForm.value.current_password,
             new_password: passwordForm.value.new_password
-        }, {
+        };
+
+        await axios.put(`${API_URL}/change-password`, payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
         alert('Password berhasil diubah! Silakan login ulang.');
 
-        // Logout user agar login pakai password baru
+        // Logout otomatis
         localStorage.clear();
         window.location.href = '/login';
 
     } catch (error) {
-        alert(error.response?.data?.error || 'Gagal mengganti password. Cek password lama Anda.');
+        const msg = error.response?.data?.error || 'Gagal mengganti password.';
+        alert(msg);
     } finally {
         isSubmittingPassword.value = false;
-        // Reset form password
+        // Reset form
         passwordForm.value = { current_password: '', new_password: '', confirm_password: '' };
     }
 };
 
 onMounted(() => {
-    fetchProfile();
+    if (!token) {
+        window.location.href = '/login';
+    } else {
+        fetchProfile();
+    }
 });
 </script>
 
