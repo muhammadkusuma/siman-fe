@@ -224,11 +224,23 @@ const closeModal = () => {
 
 const filteredAssets = computed(() => {
     if (!searchQuery.value) return assets.value;
+    
+    // Ubah query pencarian menjadi lowercase
     const lower = searchQuery.value.toLowerCase();
-    return assets.value.filter(item =>
-        item.name.toLowerCase().includes(lower) ||
-        (item.inventory_code || '').toLowerCase().includes(lower)
-    );
+    
+    return assets.value.filter(item => {
+        // Cek Nama (String)
+        const nameMatch = (item.name || '').toLowerCase().includes(lower);
+        
+        // Cek Kode Inventaris (String)
+        const codeMatch = (item.inventory_code || '').toLowerCase().includes(lower);
+        
+        // Cek NUP (Konversi Number ke String dulu)
+        // String(item.nup) mengubah angka 123 menjadi "123" agar bisa di-search
+        const nupMatch = String(item.nup || '').includes(lower);
+
+        return nameMatch || codeMatch || nupMatch;
+    });
 });
 
 onMounted(initData);
