@@ -12,6 +12,7 @@ const CategoryView = () => import('../views/master/CategoryView.vue')
 const BuildingView = () => import('../views/master/BuildingView.vue')
 const FacultyView = () => import('../views/master/FacultyView.vue')
 const MaintenanceView = () => import('../views/transactions/MaintenanceView.vue')
+const MutationView = () => import('../views/transactions/MutationView.vue')
 
 // Layout dengan Sidebar & Navbar
 const MainLayout = () => import('../layouts/MainLayout.vue')
@@ -74,9 +75,12 @@ const routes = [
                 name: 'maintenance',
                 component: MaintenanceView
             },
+            {
+                path: 'mutations', // URL: /transactions/maintenance
+                name: 'mutations',
+                component: MutationView
+            },
 
-            // Nanti tambahkan Mutasi disini:
-            // { path: 'mutations', component: MutationView }
         ]
     }
 ]

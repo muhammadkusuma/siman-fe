@@ -40,7 +40,7 @@ const logout = () => {
 
             <p class="text-xs font-semibold text-gray-500 uppercase px-2 mt-6 mb-2">Transaksi</p>
 
-            <router-link to="/mutations"
+            <router-link to="/transactions/mutations"
                 class="flex items-center px-4 py-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition"
                 active-class="bg-blue-600 text-white shadow-md">
                 <i class="fa-solid fa-truck-arrow-right w-6"></i> <span class="font-medium">Mutasi Aset</span>
