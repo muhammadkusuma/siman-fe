@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-// import axios from 'axios';
+import axios from 'axios'; // 1. UNCOMMENT INI (Wajib agar bisa request ke API)
 
 // --- STATE ---
 const categories = ref([]);
@@ -18,7 +18,7 @@ const form = ref({
     description: ''
 });
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:3000/api'; // Endpoint API
 const token = localStorage.getItem('token');
 
 // --- API ACTIONS ---
@@ -30,9 +30,14 @@ const fetchCategories = async () => {
         const response = await axios.get(`${API_URL}/categories`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+        // Mengambil data dari response.data.data sesuai format JSON backend (gin.H{"data": ...})
         categories.value = response.data.data || [];
     } catch (error) {
         console.error("Gagal mengambil data:", error);
+        // Handle jika token expired
+        if (error.response && error.response.status === 401) {
+            window.location.href = '/login';
+        }
     } finally {
         isLoading.value = false;
     }
@@ -51,19 +56,20 @@ const handleSubmit = async () => {
         const config = { headers: { 'Authorization': `Bearer ${token}` } };
 
         if (isEditing.value) {
-            // Update
+            // Update: PUT /api/categories/:id
             await axios.put(`${API_URL}/categories/${form.value.id}`, payload, config);
             alert('Kategori berhasil diperbarui!');
         } else {
-            // Create
+            // Create: POST /api/categories
             await axios.post(`${API_URL}/categories`, payload, config);
             alert('Kategori berhasil ditambahkan!');
         }
 
         closeModal();
-        fetchCategories(); // Refresh data
+        fetchCategories(); // Refresh data tabel
 
     } catch (error) {
+        console.error(error);
         alert(error.response?.data?.error || 'Gagal menyimpan data');
     } finally {
         isSubmitting.value = false;
@@ -75,22 +81,26 @@ const deleteCategory = async (id) => {
     if (!confirm('Apakah Anda yakin ingin menghapus kategori ini?')) return;
 
     try {
+        // Delete: DELETE /api/categories/:id
         await axios.delete(`${API_URL}/categories/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         fetchCategories(); // Refresh data
     } catch (error) {
+        console.error(error);
         alert('Gagal menghapus data.');
     }
 };
 
 // --- HELPER FUNCTIONS ---
 
-// Filter Pencarian
+// Filter Pencarian (Client-side search)
 const filteredCategories = computed(() => {
+    if (!searchQuery.value) return categories.value;
+    const lower = searchQuery.value.toLowerCase();
     return categories.value.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        item.kode_barang.toLowerCase().includes(searchQuery.value.toLowerCase())
+        item.name.toLowerCase().includes(lower) ||
+        item.kode_barang.toLowerCase().includes(lower)
     );
 });
 
@@ -99,7 +109,7 @@ const openModal = (category = null) => {
     if (category) {
         // Edit Mode
         isEditing.value = true;
-        form.value = { ...category }; // Copy object
+        form.value = { ...category }; // Copy object agar reaktif
     } else {
         // Create Mode
         isEditing.value = false;
@@ -113,7 +123,12 @@ const closeModal = () => {
 };
 
 onMounted(() => {
-    fetchCategories();
+    // Cek token sebelum request
+    if (!token) {
+        window.location.href = '/login';
+    } else {
+        fetchCategories();
+    }
 });
 </script>
 
@@ -132,7 +147,6 @@ onMounted(() => {
         </header>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-
             <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                 <div class="relative w-full max-w-xs">
                     <input v-model="searchQuery" type="text" placeholder="Cari kode atau nama..."

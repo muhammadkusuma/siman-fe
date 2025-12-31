@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-// import axios from 'axios';
+import axios from 'axios'; // 1. UNCOMMENT INI (Wajib)
 
 // --- STATE ---
 const faculties = ref([]);
@@ -38,6 +38,10 @@ const fetchFaculties = async () => {
         }
     } catch (error) {
         console.error("Gagal load fakultas:", error);
+        // Handle jika token expired
+        if (error.response && error.response.status === 401) {
+            window.location.href = '/login';
+        }
     } finally {
         isLoading.value = false;
     }
@@ -55,8 +59,10 @@ const submitFaculty = async () => {
         const config = { headers: { 'Authorization': `Bearer ${token}` } };
 
         if (isEditing.value) {
+            // PUT /api/faculties/:id
             await axios.put(`${API_URL}/faculties/${facultyForm.value.id}`, payload, config);
         } else {
+            // POST /api/faculties
             await axios.post(`${API_URL}/faculties`, payload, config);
         }
 
@@ -74,6 +80,7 @@ const submitFaculty = async () => {
 const deleteFaculty = async (id) => {
     if (!confirm('Hapus Fakultas ini? Data Prodi di dalamnya juga akan terhapus.')) return;
     try {
+        // DELETE /api/faculties/:id
         await axios.delete(`${API_URL}/faculties/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -93,10 +100,9 @@ const submitProdi = async () => {
             faculty_id: selectedFaculty.value.id,
             code: prodiForm.value.code,
             name: prodiForm.value.name,
-            degree: prodiForm.value.degree // Misal: S1, D3
+            degree: prodiForm.value.degree
         };
 
-        // Asumsi endpoint untuk prodi adalah /departments
         await axios.post(`${API_URL}/departments`, payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -115,10 +121,11 @@ const submitProdi = async () => {
 const deleteProdi = async (prodiId) => {
     if (!confirm('Hapus Prodi ini?')) return;
     try {
+        // DELETE /api/departments/:id
         await axios.delete(`${API_URL}/departments/${prodiId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        fetchFaculties();
+        fetchFaculties(); // Refresh untuk update tampilan list
     } catch (error) {
         alert('Gagal menghapus prodi.');
     }
@@ -143,6 +150,10 @@ const closeFacultyModal = () => {
 
 const openProdiModal = (faculty) => {
     selectedFaculty.value = faculty;
+    // Jika departments belum ada (null), inisialisasi array kosong
+    if (!selectedFaculty.value.departments) {
+        selectedFaculty.value.departments = [];
+    }
     prodiForm.value = { code: '', name: '', degree: 'S1' };
     isProdiModalOpen.value = true;
 };
@@ -152,7 +163,13 @@ const closeProdiModal = () => {
     selectedFaculty.value = null;
 };
 
-onMounted(fetchFaculties);
+onMounted(() => {
+    if (!token) {
+        window.location.href = '/login';
+    } else {
+        fetchFaculties();
+    }
+});
 </script>
 
 <template>
@@ -266,7 +283,7 @@ onMounted(fetchFaculties);
                     <div>
                         <h3 class="text-lg font-bold text-gray-900">Kelola Program Studi</h3>
                         <p class="text-sm text-gray-500">Unit: <span class="font-bold text-blue-600">{{
-                                selectedFaculty.name }}</span></p>
+                            selectedFaculty.name }}</span></p>
                     </div>
                     <button @click="closeProdiModal" class="text-gray-400 hover:text-red-500"><i
                             class="fa-solid fa-times text-xl"></i></button>
@@ -327,7 +344,7 @@ onMounted(fetchFaculties);
                                     <td class="px-4 py-2">
                                         <span
                                             class="bg-yellow-100 text-yellow-800 text-[10px] px-2 py-0.5 rounded-full font-bold">{{
-                                            dept.degree || 'S1' }}</span>
+                                                dept.degree || 'S1' }}</span>
                                     </td>
                                     <td class="px-4 py-2">{{ dept.name }}</td>
                                     <td class="px-4 py-2 text-right">

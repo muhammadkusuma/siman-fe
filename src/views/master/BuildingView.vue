@@ -1,11 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-// import axios from 'axios';
+import axios from 'axios'; // 1. UNCOMMENT INI (Wajib agar bisa request ke API)
 
 // --- STATE ---
 const buildings = ref([]);
 const isLoading = ref(false);
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:3000/api'; // Pastikan sesuai dengan group /api di main.go
 const token = localStorage.getItem('token');
 
 // Modal States
@@ -26,6 +26,7 @@ const fetchBuildings = async () => {
         const response = await axios.get(`${API_URL}/buildings`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+        // Mengambil data dari response.data.data
         buildings.value = response.data.data || [];
 
         // Jika modal ruangan sedang terbuka, update datanya juga (agar realtime saat tambah room)
@@ -35,6 +36,10 @@ const fetchBuildings = async () => {
         }
     } catch (error) {
         console.error("Gagal load gedung:", error);
+        // Handle token expired jika perlu
+        if (error.response && error.response.status === 401) {
+            window.location.href = '/login';
+        }
     } finally {
         isLoading.value = false;
     }
@@ -43,7 +48,13 @@ const fetchBuildings = async () => {
 const submitBuilding = async () => {
     isSubmitting.value = true;
     try {
-        await axios.post(`${API_URL}/buildings`, buildingForm.value, {
+        // Konversi total_floors ke integer agar sesuai tipe data backend (uint/int)
+        const payload = {
+            ...buildingForm.value,
+            total_floors: parseInt(buildingForm.value.total_floors)
+        };
+
+        await axios.post(`${API_URL}/buildings`, payload, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         alert('Gedung berhasil ditambahkan!');
@@ -64,7 +75,9 @@ const deleteBuilding = async (id) => {
         });
         fetchBuildings();
     } catch (error) {
-        alert('Gagal menghapus gedung.');
+        // Jika error 404, berarti rute DELETE belum ada di backend
+        console.error(error);
+        alert(error.response?.data?.error || 'Gagal menghapus gedung. Pastikan API DELETE tersedia.');
     }
 };
 
@@ -75,7 +88,7 @@ const submitRoom = async () => {
 
     try {
         const payload = {
-            building_id: selectedBuilding.value.id,
+            building_id: selectedBuilding.value.id, // ID Gedung dari parent
             room_number: roomForm.value.room_number,
             name: roomForm.value.name,
             floor: parseInt(roomForm.value.floor)
@@ -88,7 +101,7 @@ const submitRoom = async () => {
         // Reset form kecil
         roomForm.value = { room_number: '', name: '', floor: '' };
 
-        // Refresh data utama untuk update list ruangan
+        // Refresh data utama untuk update list ruangan di modal
         await fetchBuildings();
 
     } catch (error) {
@@ -124,6 +137,9 @@ const openRoomModal = (building) => {
     // Sort room saat modal dibuka (Lantai -> No Ruang)
     if (selectedBuilding.value.rooms) {
         selectedBuilding.value.rooms.sort((a, b) => a.floor - b.floor || a.room_number.localeCompare(b.room_number));
+    } else {
+        // Jika rooms null/undefined, inisialisasi array kosong agar tidak error di template
+        selectedBuilding.value.rooms = [];
     }
     roomForm.value = { room_number: '', name: '', floor: '' };
     isRoomModalOpen.value = true;
@@ -134,7 +150,13 @@ const closeRoomModal = () => {
     selectedBuilding.value = null;
 };
 
-onMounted(fetchBuildings);
+onMounted(() => {
+    if (!token) {
+        window.location.href = '/login';
+    } else {
+        fetchBuildings();
+    }
+});
 </script>
 
 <template>
@@ -241,7 +263,7 @@ onMounted(fetchBuildings);
                     <div>
                         <h3 class="text-lg font-bold text-gray-900">Kelola Ruangan</h3>
                         <p class="text-sm text-gray-500">Gedung: <span class="font-bold text-blue-600">{{
-                                selectedBuilding.name }}</span> ({{ selectedBuilding.code }})</p>
+                            selectedBuilding.name }}</span> ({{ selectedBuilding.code }})</p>
                     </div>
                     <button @click="closeRoomModal" class="text-gray-400 hover:text-red-500"><i
                             class="fa-solid fa-times text-xl"></i></button>
@@ -294,7 +316,7 @@ onMounted(fetchBuildings);
                                 <tr v-else v-for="room in selectedBuilding.rooms" :key="room.id"
                                     class="border-b last:border-0 hover:bg-gray-50">
                                     <td class="px-4 py-2 font-mono text-xs font-bold text-gray-600">{{ room.room_number
-                                        }}</td>
+                                    }}</td>
                                     <td class="px-4 py-2">{{ room.name }}</td>
                                     <td class="px-4 py-2">Lt. {{ room.floor }}</td>
                                     <td class="px-4 py-2 text-right">
