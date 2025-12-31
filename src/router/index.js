@@ -8,8 +8,11 @@ const RegisterView = () => import('../views/auth/RegisterView.vue')
 // Views untuk Admin
 const DashboardView = () => import('../views/dashboard/DashboardView.vue')
 const AuditLogView = () => import('../views/AuditLogView.vue')
-const CategoryView = () => import('../views/master/CategoryView.vue') 
+const CategoryView = () => import('../views/master/CategoryView.vue')
 const BuildingView = () => import('../views/master/BuildingView.vue')
+const FacultyView = () => import('../views/master/FacultyView.vue')
+
+// Layout dengan Sidebar & Navbar
 const MainLayout = () => import('../layouts/MainLayout.vue')
 
 const routes = [
@@ -52,6 +55,11 @@ const routes = [
                 path: 'buildings',
                 name: 'master-buildings',
                 component: BuildingView
+            },
+            {
+                path: 'faculties', // URL: /master/faculties
+                name: 'master-faculties',
+                component: FacultyView
             }
         ]
     },
