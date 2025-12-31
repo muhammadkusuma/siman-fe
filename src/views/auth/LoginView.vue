@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios'; // Pastikan ini ada
 
 const router = useRouter();
 
@@ -9,9 +10,9 @@ const username = ref('');
 const password = ref('');
 const isLoading = ref(false);
 const errorMessage = ref('');
-const showPassword = ref(false); // Opsional: jika ingin fitur lihat password
+const showPassword = ref(false);
 
-// Konfigurasi API (Sebaiknya dipindah ke .env nantinya)
+// Konfigurasi API
 const API_URL = 'http://localhost:3000';
 
 const handleLogin = async () => {
@@ -20,22 +21,22 @@ const handleLogin = async () => {
     errorMessage.value = '';
 
     try {
-        // Request ke Backend
+        // PERBAIKAN: Gunakan endpoint /login (bukan /api/login)
         const response = await axios.post(`${API_URL}/login`, {
             username: username.value,
             password: password.value
         });
 
-        // Jika sukses (axios otomatis throw error jika status != 2xx)
+        // Jika sukses
         const { token, role } = response.data;
 
         // Simpan ke LocalStorage
         localStorage.setItem('token', token);
         localStorage.setItem('role', role);
-        localStorage.setItem('username', username.value); // Simpan username untuk display
+        localStorage.setItem('username', username.value);
 
         // Redirect ke Dashboard
-        router.push('/');
+        router.push('/dashboard'); // Pastikan ini sesuai dengan rute dashboard Anda
 
     } catch (error) {
         // Handle Error
