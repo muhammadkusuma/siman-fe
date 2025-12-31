@@ -180,10 +180,10 @@ const formatDate = (dateString) => {
                             <tr v-for="m in recentMutations" :key="m.id" class="bg-white border-b hover:bg-gray-50">
                                 <td class="px-4 py-3 font-medium text-gray-900">{{ m.asset ? m.asset.name : 'Unknown' }}
                                 </td>
-                                <td class="px-4 py-3">{{ m.from_department ? m.from_department.code : '-' }}</td>
+                                <td class="px-4 py-3">{{ m.from_department ? m.from_department.name : '-' }}</td>
                                 <td class="px-4 py-3 text-blue-600 font-medium">
                                     <i class="fa-solid fa-arrow-right text-xs mr-1"></i>
-                                    {{ m.to_department ? m.to_department.code : '-' }}
+                                    {{ m.to_department ? m.to_department.name : '-' }}
                                 </td>
                                 <td class="px-4 py-3 text-gray-400 text-xs">{{ formatDate(m.mutation_date) }}</td>
                             </tr>

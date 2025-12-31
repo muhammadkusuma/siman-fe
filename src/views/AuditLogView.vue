@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-// import axios from 'axios';
+import axios from 'axios'; // 1. FIX: Uncomment axios agar bisa request API
 
 const logs = ref([]);
 const isLoading = ref(false);
@@ -37,9 +37,14 @@ const fetchLogs = async () => {
         const response = await axios.get(`${API_URL}/audit-logs`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+        // Sesuai dengan audit_controller.go: c.JSON(..., gin.H{"data": logs})
         logs.value = response.data.data || [];
     } catch (error) {
         console.error("Gagal mengambil data log:", error);
+        // Handle Token Expired
+        if (error.response && error.response.status === 401) {
+            window.location.href = '/login';
+        }
     } finally {
         isLoading.value = false;
     }
@@ -75,7 +80,11 @@ const showingInfo = computed(() => {
 });
 
 onMounted(() => {
-    fetchLogs();
+    if (!token) {
+        window.location.href = '/login';
+    } else {
+        fetchLogs();
+    }
 });
 </script>
 
