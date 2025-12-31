@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import axios from 'axios'; // 1. FIX: Axios di-uncomment
+import axios from 'axios';
+import SearchableSelect from '../../components/SearchableSelect.vue'; // Import komponen SearchableSelect
 
 // --- STATE ---
 const mutations = ref([]);
@@ -8,7 +9,7 @@ const assets = ref([]);
 const departments = ref([]);
 const buildings = ref([]); 
 const availableRooms = ref([]); 
-const users = ref([]); // 2. Tambah state users untuk list approval
+const users = ref([]); 
 
 const isLoading = ref(false);
 const isSubmitting = ref(false);
@@ -27,12 +28,11 @@ const form = ref({
     
     mutation_date: new Date().toISOString().split('T')[0],
     reason: '',       
-    approved_by: ''   // Nanti diisi dari dropdown user
+    approved_by: ''   
 });
 
 const API_URL = 'http://localhost:3000/api';
 const token = localStorage.getItem('token');
-const currentUser = localStorage.getItem('username'); // Ambil user yang sedang login
 
 // --- HELPER FUNCTIONS ---
 const formatDate = (dateString) => {
@@ -48,13 +48,12 @@ const fetchData = async () => {
     try {
         const headers = { 'Authorization': `Bearer ${token}` };
         
-        // 3. Ambil data Users juga
         const [resMutations, resAssets, resDepts, resBuilds, resUsers] = await Promise.all([
             axios.get(`${API_URL}/mutations`, { headers }),
             axios.get(`${API_URL}/assets`, { headers }),
             axios.get(`${API_URL}/departments`, { headers }),
             axios.get(`${API_URL}/buildings`, { headers }),
-            axios.get(`${API_URL}/users`, { headers }) // Endpoint Users
+            axios.get(`${API_URL}/users`, { headers }) 
         ]);
 
         mutations.value = resMutations.data.data || [];
@@ -62,6 +61,13 @@ const fetchData = async () => {
         departments.value = resDepts.data.data || [];
         buildings.value = resBuilds.data.data || [];
         users.value = resUsers.data.data || [];
+
+        // Format Assets untuk SearchableSelect (Gabungkan kode & nama)
+        // Opsional: Agar pencarian lebih mudah
+        assets.value = assets.value.map(a => ({
+            ...a,
+            displayName: `${a.inventory_code} - ${a.name}` // Field khusus untuk display
+        }));
 
     } catch (error) {
         console.error("Gagal memuat data:", error);
@@ -87,7 +93,7 @@ const handleSubmit = async () => {
             to_room_id: parseInt(form.value.to_room_id),
             mutation_date: new Date(form.value.mutation_date).toISOString(),
             reason: form.value.reason,
-            approved_by: form.value.approved_by  // Dikirim string nama user
+            approved_by: form.value.approved_by  
         };
 
         await axios.post(`${API_URL}/mutations`, payload, {
@@ -106,8 +112,8 @@ const handleSubmit = async () => {
 };
 
 // --- EVENTS ---
-const onAssetChange = () => {
-    const selectedAsset = assets.value.find(a => a.id === form.value.asset_id);
+const onAssetChange = (selectedAsset) => {
+    // SearchableSelect mengembalikan object lengkap di event @change
     if (selectedAsset) {
         form.value.from_department_id = selectedAsset.department_id || '';
     } else {
@@ -115,9 +121,8 @@ const onAssetChange = () => {
     }
 };
 
-const onBuildingChange = () => {
+const onBuildingChange = (selectedBuilding) => {
     form.value.to_room_id = ''; 
-    const selectedBuilding = buildings.value.find(b => b.id === form.value.to_building_id);
     if (selectedBuilding && selectedBuilding.rooms) {
         availableRooms.value = selectedBuilding.rooms;
     } else {
@@ -135,7 +140,7 @@ const openModal = () => {
         to_room_id: '',
         mutation_date: new Date().toISOString().split('T')[0],
         reason: '',
-        approved_by: '' // Kosongkan, biarkan user memilih
+        approved_by: '' 
     };
     availableRooms.value = [];
     isModalOpen.value = true;
@@ -213,7 +218,7 @@ onMounted(() => {
                             </td>
                             <td class="px-6 py-4">
                                 <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold border border-gray-200">
-                                    {{ item.from_department ? item.from_department.name : '-' }}
+                                    {{ item.from_department ? item.from_department.code : '-' }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-center">
@@ -222,7 +227,7 @@ onMounted(() => {
                             <td class="px-6 py-4">
                                 <div class="text-xs">
                                     <span class="bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold border border-blue-100 block mb-1 w-max">
-                                        {{ item.to_department ? item.to_department.name : '-' }}
+                                        {{ item.to_department ? item.to_department.code : '-' }}
                                     </span>
                                     <span class="text-gray-500">{{ item.to_room ? item.to_room.name : '' }}</span>
                                 </div>
@@ -251,13 +256,14 @@ onMounted(() => {
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Aset <span class="text-red-500">*</span></label>
-                        <select v-model="form.asset_id" @change="onAssetChange" required 
-                            class="block w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                            <option value="" disabled>-- Cari Aset --</option>
-                            <option v-for="a in assets" :key="a.id" :value="a.id">
-                                {{ a.inventory_code }} - {{ a.name }}
-                            </option>
-                        </select>
+                        <SearchableSelect 
+                            v-model="form.asset_id" 
+                            :options="assets" 
+                            label="displayName" 
+                            track-by="id"
+                            placeholder="Cari nama atau kode aset..."
+                            @change="onAssetChange"
+                        />
                     </div>
 
                     <div class="grid grid-cols-2 gap-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
@@ -276,28 +282,37 @@ onMounted(() => {
 
                         <div class="col-span-2">
                             <label class="block text-sm font-bold text-blue-800 mb-1">Ke Unit Tujuan <span class="text-red-500">*</span></label>
-                            <select v-model="form.to_department_id" required 
-                                class="block w-full border border-blue-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                                <option value="" disabled>-- Pilih Unit Penerima --</option>
-                                <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.code }} - {{ d.name }}</option>
-                            </select>
+                            <SearchableSelect 
+                                v-model="form.to_department_id" 
+                                :options="departments" 
+                                label="name" 
+                                track-by="id"
+                                placeholder="Cari Unit Penerima..."
+                            />
                         </div>
 
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Gedung Tujuan</label>
-                            <select v-model="form.to_building_id" @change="onBuildingChange" required
-                                class="block w-full border border-blue-300 rounded-lg py-2 px-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none bg-white">
-                                <option value="" disabled>- Pilih Gedung -</option>
-                                <option v-for="b in buildings" :key="b.id" :value="b.id">{{ b.name }} ({{ b.code }})</option>
-                            </select>
+                            <SearchableSelect 
+                                v-model="form.to_building_id" 
+                                :options="buildings" 
+                                label="name" 
+                                track-by="id"
+                                placeholder="Pilih Gedung..."
+                                @change="onBuildingChange"
+                            />
                         </div>
+
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Ruangan Tujuan <span class="text-red-500">*</span></label>
-                            <select v-model="form.to_room_id" :disabled="!form.to_building_id" required
-                                class="block w-full border border-blue-300 rounded-lg py-2 px-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none bg-white disabled:bg-gray-200 disabled:cursor-not-allowed">
-                                <option value="" disabled>- Pilih Ruangan -</option>
-                                <option v-for="r in availableRooms" :key="r.id" :value="r.id">{{ r.name }} (Lt.{{ r.floor }})</option>
-                            </select>
+                            <SearchableSelect 
+                                v-model="form.to_room_id" 
+                                :options="availableRooms" 
+                                label="name" 
+                                track-by="id"
+                                placeholder="Pilih Ruangan..."
+                                :disabled="!form.to_building_id"
+                            />
                         </div>
                     </div>
 
@@ -310,13 +325,13 @@ onMounted(() => {
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Disetujui Oleh</label>
-                            <select v-model="form.approved_by" 
-                                class="block w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                                <option value="" disabled>-- Pilih Pejabat --</option>
-                                <option v-for="u in users" :key="u.id" :value="u.full_name">
-                                    {{ u.full_name }} ({{ u.role }})
-                                </option>
-                            </select>
+                            <SearchableSelect 
+                                v-model="form.approved_by" 
+                                :options="users" 
+                                label="full_name" 
+                                track-by="full_name" 
+                                placeholder="Cari Pejabat..."
+                            />
                         </div>
                     </div>
 
