@@ -46,7 +46,7 @@ const logout = () => {
                 <i class="fa-solid fa-truck-arrow-right w-6"></i> <span class="font-medium">Mutasi Aset</span>
             </router-link>
 
-            <router-link to="/maintenance"
+            <router-link to="/transactions/maintenance"
                 class="flex items-center px-4 py-3 text-gray-400 hover:bg-slate-800 hover:text-white rounded-lg transition"
                 active-class="bg-blue-600 text-white shadow-md">
                 <i class="fa-solid fa-screwdriver-wrench w-6"></i> <span class="font-medium">Perbaikan</span>

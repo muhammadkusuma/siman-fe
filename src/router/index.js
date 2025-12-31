@@ -11,6 +11,7 @@ const AuditLogView = () => import('../views/AuditLogView.vue')
 const CategoryView = () => import('../views/master/CategoryView.vue')
 const BuildingView = () => import('../views/master/BuildingView.vue')
 const FacultyView = () => import('../views/master/FacultyView.vue')
+const MaintenanceView = () => import('../views/transactions/MaintenanceView.vue')
 
 // Layout dengan Sidebar & Navbar
 const MainLayout = () => import('../layouts/MainLayout.vue')
@@ -60,9 +61,24 @@ const routes = [
                 path: 'faculties', // URL: /master/faculties
                 name: 'master-faculties',
                 component: FacultyView
-            }
+            },
         ]
     },
+    {
+        path: '/transactions', // Bisa dikelompokkan atau langsung di root
+        component: MainLayout,
+        children: [
+            // Rute Perbaikan
+            {
+                path: 'maintenance', // URL: /transactions/maintenance
+                name: 'maintenance',
+                component: MaintenanceView
+            },
+
+            // Nanti tambahkan Mutasi disini:
+            // { path: 'mutations', component: MutationView }
+        ]
+    }
 ]
 
 const router = createRouter({
