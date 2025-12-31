@@ -1,56 +1,57 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// 1. Import komponen halaman
+// 1. Import Semua Komponen Halaman
 const LandingPage = () => import('../views/LandingPage.vue')
 const LoginView = () => import('../views/auth/LoginView.vue')
 const RegisterView = () => import('../views/auth/RegisterView.vue')
+
+// Views untuk Admin
 const DashboardView = () => import('../views/dashboard/DashboardView.vue')
 const AuditLogView = () => import('../views/AuditLogView.vue')
-const CategoryView = () => import('../views/master/CategoryView.vue')
+const CategoryView = () => import('../views/master/CategoryView.vue') // <--- PENTING: Import ini harus ada
 
-// Import Layout (Sidebar & Navbar ada di sini)
+// Import Layout Utama
 const MainLayout = () => import('../layouts/MainLayout.vue')
 
 const routes = [
-    // Rute Publik (Tanpa Sidebar)
+    // --- RUTE PUBLIK (Tanpa Sidebar) ---
     { path: '/', name: 'landing', component: LandingPage },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/register', name: 'register', component: RegisterView },
 
-    // Rute Dashboard (Pakai MainLayout)
+    // --- RUTE ADMIN (Dengan Sidebar & Navbar) ---
+    // Cara terbaik adalah mengelompokkan semuanya di bawah satu parent route
+    // Tapi untuk menjaga URL Anda tetap seperti '/dashboard', '/audit-logs', dll, kita bisa buat seperti ini:
+
     {
         path: '/dashboard',
         component: MainLayout,
         children: [
-            {
-                path: '',
-                name: 'dashboard',
-                component: DashboardView
-            }
+            { path: '', name: 'dashboard', component: DashboardView }
         ]
     },
 
-    // Rute Audit Logs (Pakai MainLayout juga agar Sidebar muncul)
     {
         path: '/audit-logs',
-        component: MainLayout, // Parent Component (Layout)
+        component: MainLayout,
         children: [
-            {
-                path: '', // Path kosong berarti ikut parent (/audit-logs)
-                name: 'audit-logs',
-                component: AuditLogView // Child Component (Isi Konten)
-            }
+            { path: '', name: 'audit-logs', component: AuditLogView }
         ]
     },
+
+    // Rute Master Data
     {
-        path: 'master/categories',
+        path: '/master',
         component: MainLayout,
         children: [
             {
-                path: '', // Path kosong berarti ikut parent (/audit-logs)
-                name: 'master/categories',
-                component: CategoryView // Child Component (Isi Konten)
-            }
+                path: 'categories', // URL menjadi: /master/categories
+                name: 'master-categories',
+                component: CategoryView
+            },
+            // Nanti tambahkan rute master lainnya disini:
+            // { path: 'faculties', component: FacultyView },
+            // { path: 'buildings', component: BuildingView },
         ]
     },
 ]
