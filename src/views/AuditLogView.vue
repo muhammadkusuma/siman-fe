@@ -1,13 +1,17 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import { ref, onMounted, computed } from 'vue';
+// import axios from 'axios';
 
 const logs = ref([]);
 const isLoading = ref(false);
 const API_URL = 'http://localhost:3000/api';
 const token = localStorage.getItem('token');
 
-// Helper: Format Tanggal (Indonesia)
+// --- STATE PAGINASI ---
+const currentPage = ref(1);
+const itemsPerPage = 10; // Menampilkan 10 data per halaman
+
+// Helper: Format Tanggal
 const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleString('id-ID', {
@@ -16,7 +20,7 @@ const formatDate = (dateString) => {
     });
 };
 
-// Helper: Warna Badge berdasarkan Aksi
+// Helper: Warna Badge
 const getActionClass = (action) => {
     switch (action) {
         case 'CREATE': return 'bg-green-100 text-green-800';
@@ -26,6 +30,7 @@ const getActionClass = (action) => {
     }
 };
 
+// Fetch Data
 const fetchLogs = async () => {
     isLoading.value = true;
     try {
@@ -35,11 +40,39 @@ const fetchLogs = async () => {
         logs.value = response.data.data || [];
     } catch (error) {
         console.error("Gagal mengambil data log:", error);
-        // Opsional: Handle jika token expired / unauthorized
     } finally {
         isLoading.value = false;
     }
 };
+
+// --- LOGIC PAGINASI ---
+
+// 1. Hitung Total Halaman
+const totalPages = computed(() => {
+    return Math.ceil(logs.value.length / itemsPerPage);
+});
+
+// 2. Filter Data sesuai Halaman Aktif
+const paginatedLogs = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return logs.value.slice(start, end);
+});
+
+// 3. Fungsi Ganti Halaman
+const changePage = (page) => {
+    if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page;
+    }
+};
+
+// 4. Info Data (Menampilkan "1 - 10 dari 50 data")
+const showingInfo = computed(() => {
+    if (logs.value.length === 0) return '0 data';
+    const start = (currentPage.value - 1) * itemsPerPage + 1;
+    const end = Math.min(currentPage.value * itemsPerPage, logs.value.length);
+    return `${start} - ${end} dari ${logs.value.length} data`;
+});
 
 onMounted(() => {
     fetchLogs();
@@ -83,7 +116,8 @@ onMounted(() => {
                             <td colspan="5" class="text-center py-8 text-gray-400">Belum ada aktivitas terekam.</td>
                         </tr>
 
-                        <tr v-else v-for="log in logs" :key="log.id" class="border-b hover:bg-gray-50 transition">
+                        <tr v-else v-for="log in paginatedLogs" :key="log.id"
+                            class="border-b hover:bg-gray-50 transition">
                             <td class="px-6 py-4 whitespace-nowrap text-gray-600 font-mono text-xs">
                                 {{ formatDate(log.created_at) }}
                             </td>
@@ -112,6 +146,30 @@ onMounted(() => {
                     </tbody>
                 </table>
             </div>
+
+            <div v-if="logs.length > 0"
+                class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+                <span class="text-xs text-gray-500">
+                    Menampilkan {{ showingInfo }}
+                </span>
+
+                <div class="inline-flex items-center space-x-1">
+                    <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1"
+                        class="px-3 py-1 rounded-md text-xs font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+
+                    <span class="px-3 py-1 text-xs font-medium text-gray-700">
+                        Halaman {{ currentPage }} dari {{ totalPages }}
+                    </span>
+
+                    <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages"
+                        class="px-3 py-1 rounded-md text-xs font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 </template>

@@ -1,29 +1,43 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// Import komponen halaman
+// 1. Import komponen halaman
 const LandingPage = () => import('../views/LandingPage.vue')
 const LoginView = () => import('../views/auth/LoginView.vue')
 const RegisterView = () => import('../views/auth/RegisterView.vue')
 const DashboardView = () => import('../views/dashboard/DashboardView.vue')
+const AuditLogView = () => import('../views/AuditLogView.vue') // <--- Tambahkan Import ini
 
-// Import Layout (PENTING: Layout ini berisi Sidebar & Navbar)
+// Import Layout (Sidebar & Navbar ada di sini)
 const MainLayout = () => import('../layouts/MainLayout.vue')
 
 const routes = [
-    // Rute Publik
+    // Rute Publik (Tanpa Sidebar)
     { path: '/', name: 'landing', component: LandingPage },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/register', name: 'register', component: RegisterView },
 
-    // Rute Dashboard & Admin (Menggunakan MainLayout)
+    // Rute Dashboard (Pakai MainLayout)
     {
         path: '/dashboard',
-        component: MainLayout, // <--- Parent component adalah Layout
+        component: MainLayout,
         children: [
             {
-                path: '', // Path kosong berarti akan dirender saat akses /dashboard
+                path: '',
                 name: 'dashboard',
-                component: DashboardView // <--- Child component dirender di dalam <router-view> milik Layout
+                component: DashboardView
+            }
+        ]
+    },
+
+    // Rute Audit Logs (Pakai MainLayout juga agar Sidebar muncul)
+    {
+        path: '/audit-logs',
+        component: MainLayout, // Parent Component (Layout)
+        children: [
+            {
+                path: '', // Path kosong berarti ikut parent (/audit-logs)
+                name: 'audit-logs',
+                component: AuditLogView // Child Component (Isi Konten)
             }
         ]
     },
