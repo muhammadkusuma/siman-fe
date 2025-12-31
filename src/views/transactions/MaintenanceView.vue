@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import axios from 'axios'; // Pastikan axios aktif
+import axios from 'axios';
+import SearchableSelect from '../../components/SearchableSelect.vue'; // 1. Import Component
 
 // --- STATE ---
 const maintenances = ref([]);
@@ -8,7 +9,7 @@ const assets = ref([]);
 const isLoading = ref(false);
 const isSubmitting = ref(false);
 const isModalOpen = ref(false);
-const isEditing = ref(false); // State untuk membedakan Mode Tambah / Edit
+const isEditing = ref(false); 
 const searchQuery = ref('');
 
 // Form State
@@ -48,6 +49,13 @@ const fetchData = async () => {
 
         maintenances.value = resMaintenance.data.data || [];
         assets.value = resAssets.data.data || [];
+
+        // Format asset label untuk searchable select
+        assets.value = assets.value.map(a => ({
+            ...a,
+            displayName: `${a.inventory_code} - ${a.name}`
+        }));
+
     } catch (error) {
         console.error("Gagal memuat data:", error);
         if (error.response && error.response.status === 401) {
@@ -74,17 +82,15 @@ const handleSubmit = async () => {
         const headers = { 'Authorization': `Bearer ${token}` };
 
         if (isEditing.value) {
-            // UPDATE (PUT)
             await axios.put(`${API_URL}/maintenances/${form.value.id}`, payload, { headers });
             alert('Data perbaikan berhasil diperbarui!');
         } else {
-            // CREATE (POST)
             await axios.post(`${API_URL}/maintenances`, payload, { headers });
             alert('Data perbaikan berhasil disimpan!');
         }
 
         closeModal();
-        fetchData(); // Refresh data
+        fetchData();
 
     } catch (error) {
         alert(error.response?.data?.error || 'Gagal menyimpan data.');
@@ -108,12 +114,10 @@ const deleteMaintenance = async (id) => {
 // --- MODAL LOGIC ---
 const openModal = (item = null) => {
     if (item) {
-        // Mode Edit
         isEditing.value = true;
         form.value = {
             id: item.id,
             asset_id: item.asset_id,
-            // Format tanggal untuk input date (YYYY-MM-DD)
             issue_date: item.issue_date ? item.issue_date.split('T')[0] : '',
             status: item.status,
             description: item.description,
@@ -122,7 +126,6 @@ const openModal = (item = null) => {
             action_taken: item.action_taken
         };
     } else {
-        // Mode Create
         isEditing.value = false;
         form.value = {
             id: null,
@@ -142,17 +145,33 @@ const closeModal = () => {
     isModalOpen.value = false;
 };
 
+// 2. FIX SEARCH FILTER TABEL
 const filteredMaintenances = computed(() => {
     if (!searchQuery.value) return maintenances.value;
     const lower = searchQuery.value.toLowerCase();
-    return maintenances.value.filter(item =>
-        (item.asset?.name || '').toLowerCase().includes(lower) ||
-        (item.vendor_name || '').toLowerCase().includes(lower) ||
-        (item.description || '').toLowerCase().includes(lower)
-    );
+    
+    return maintenances.value.filter(item => {
+        const assetName = (item.asset?.name || '').toLowerCase();
+        const assetCode = (item.asset?.inventory_code || '').toLowerCase();
+        const vendor = (item.vendor_name || '').toLowerCase();
+        const desc = (item.description || '').toLowerCase();
+        const action = (item.action_taken || '').toLowerCase();
+
+        return assetName.includes(lower) || 
+               assetCode.includes(lower) || 
+               vendor.includes(lower) || 
+               desc.includes(lower) || 
+               action.includes(lower);
+    });
 });
 
-onMounted(fetchData);
+onMounted(() => {
+    if (!token) {
+        window.location.href = '/login';
+    } else {
+        fetchData();
+    }
+});
 </script>
 
 <template>
@@ -170,7 +189,8 @@ onMounted(fetchData);
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="p-4 border-b border-gray-100 bg-gray-50">
                 <div class="relative w-full sm:w-64">
-                    <input v-model="searchQuery" type="text" placeholder="Cari aset, vendor..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    <input v-model="searchQuery" type="text" placeholder="Cari aset, vendor, deskripsi..."
+                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                     <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
                 </div>
             </div>
@@ -247,10 +267,13 @@ onMounted(fetchData);
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Aset <span class="text-red-500">*</span></label>
-                        <select v-model="form.asset_id" required class="block w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                            <option value="" disabled>-- Cari Aset --</option>
-                            <option v-for="a in assets" :key="a.id" :value="a.id">{{ a.inventory_code }} - {{ a.name }}</option>
-                        </select>
+                        <SearchableSelect 
+                            v-model="form.asset_id" 
+                            :options="assets" 
+                            label="displayName" 
+                            track-by="id"
+                            placeholder="Cari nama atau kode aset..."
+                        />
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-yellow-50 p-4 rounded-lg border border-yellow-100">
