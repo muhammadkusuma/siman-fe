@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-// import axios from 'axios';
-import Chart from 'chart.js/auto'; // Import Chart.js
+import axios from 'axios'; // 1. UNCOMMENT INI (Wajib agar bisa request ke API)
+import Chart from 'chart.js/auto';
 
 // State
 const stats = ref({
@@ -11,16 +11,23 @@ const stats = ref({
     mutations: 0
 });
 const recentMutations = ref([]);
-const chartCanvas = ref(null); // Referensi ke elemen canvas
+const chartCanvas = ref(null);
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:3000/api'; // Sudah sesuai dengan main.go
 const token = localStorage.getItem('token');
 
 onMounted(async () => {
+    // Cek Token
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
     try {
         const headers = { 'Authorization': `Bearer ${token}` };
 
-        // Fetch Data (Parallel agar lebih cepat)
+        // Fetch Data (Parallel)
+        // Request ke /api/assets dan /api/mutations
         const [resAssets, resMutations] = await Promise.all([
             axios.get(`${API_URL}/assets`, { headers }),
             axios.get(`${API_URL}/mutations`, { headers })
@@ -29,7 +36,7 @@ onMounted(async () => {
         const assets = resAssets.data.data || [];
         const mutations = resMutations.data.data || [];
 
-        // 1. Kalkulasi Statistik
+        // 1. Kalkulasi Statistik (Client Side)
         stats.value.totalAssets = assets.length;
         stats.value.totalValue = assets.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
 
@@ -41,7 +48,6 @@ onMounted(async () => {
         stats.value.mutations = mutations.length;
 
         // 2. Ambil 5 Mutasi Terakhir
-        // (Asumsi data dari backend belum terurut, kita urutkan berdasarkan tanggal)
         recentMutations.value = mutations
             .sort((a, b) => new Date(b.mutation_date) - new Date(a.mutation_date))
             .slice(0, 5);
@@ -51,7 +57,12 @@ onMounted(async () => {
         const rusak = assets.filter(a => a.condition_status === 'Rusak').length;
         const lainnya = assets.length - (baik + rusak);
 
-        new Chart(chartCanvas.value, {
+        // Hancurkan chart lama jika ada (untuk mencegah overlay saat hot reload)
+        if (window.myChart instanceof Chart) {
+            window.myChart.destroy();
+        }
+
+        window.myChart = new Chart(chartCanvas.value, {
             type: 'doughnut',
             data: {
                 labels: ['Baik', 'Rusak', 'Lainnya'],
@@ -69,6 +80,11 @@ onMounted(async () => {
 
     } catch (error) {
         console.error("Gagal memuat data dashboard:", error);
+        if (error.response && error.response.status === 401) {
+            // Token expired
+            localStorage.clear();
+            window.location.href = '/login';
+        }
     }
 });
 
@@ -98,15 +114,15 @@ const formatDate = (dateString) => {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-gray-500 text-sm font-medium">Total Aset</h3>
                     <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-cubes"></i></div>
                 </div>
                 <p class="text-3xl font-bold text-gray-800">{{ stats.totalAssets }}</p>
-                <p class="text-xs text-green-500 mt-2 flex items-center"><i class="fa-solid fa-arrow-up mr-1"></i> Data
-                    Realtime</p>
+                <p class="text-xs text-green-500 mt-2 flex items-center">
+                    <i class="fa-solid fa-arrow-up mr-1"></i> Data Realtime
+                </p>
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -141,11 +157,11 @@ const formatDate = (dateString) => {
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
             <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="font-bold text-gray-800">Mutasi Aset Terakhir</h3>
-                    <router-link to="/mutations" class="text-sm text-blue-600 hover:underline">Lihat Semua</router-link>
+                    <router-link to="/transactions/mutations" class="text-sm text-blue-600 hover:underline">Lihat
+                        Semua</router-link>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left text-gray-500">
@@ -180,7 +196,6 @@ const formatDate = (dateString) => {
                 <h3 class="font-bold text-gray-800 mb-6">Kondisi Aset</h3>
                 <canvas ref="chartCanvas"></canvas>
             </div>
-
         </div>
     </div>
 </template>
