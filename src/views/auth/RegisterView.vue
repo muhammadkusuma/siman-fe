@@ -18,7 +18,7 @@ const alertMessage = ref('');
 const alertType = ref('');
 
 // Konfigurasi API
-const API_URL = 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const handleRegister = async () => {
     // Reset UI State

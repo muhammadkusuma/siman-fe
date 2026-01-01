@@ -5,7 +5,7 @@ import axios from 'axios'; // 1. UNCOMMENT INI (Wajib)
 // --- STATE ---
 const faculties = ref([]);
 const isLoading = ref(false);
-const API_URL = 'http://localhost:3000/api';
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api`;
 const token = localStorage.getItem('token');
 
 // Modal States

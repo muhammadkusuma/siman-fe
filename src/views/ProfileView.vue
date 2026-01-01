@@ -22,7 +22,7 @@ const passwordForm = ref({
 });
 
 // Konfigurasi API
-const API_URL = 'http://localhost:3000/api'; // Endpoint group backend
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api`; // Endpoint group backend
 const token = localStorage.getItem('token');
 
 // --- ACTIONS ---

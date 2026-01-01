@@ -18,7 +18,7 @@ const form = ref({
     description: ''
 });
 
-const API_URL = 'http://localhost:3000/api'; // Endpoint API
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api`; // Endpoint API
 const token = localStorage.getItem('token');
 
 // --- API ACTIONS ---

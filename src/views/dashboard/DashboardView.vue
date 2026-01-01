@@ -13,7 +13,7 @@ const stats = ref({
 const recentMutations = ref([]);
 const chartCanvas = ref(null);
 
-const API_URL = 'http://localhost:3000/api'; // Sudah sesuai dengan main.go
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api`; // Sudah sesuai dengan main.go
 const token = localStorage.getItem('token');
 
 onMounted(async () => {

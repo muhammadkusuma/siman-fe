@@ -5,7 +5,7 @@ import axios from 'axios'; // 1. UNCOMMENT INI (Wajib agar bisa request ke API)
 // --- STATE ---
 const buildings = ref([]);
 const isLoading = ref(false);
-const API_URL = 'http://localhost:3000/api'; // Pastikan sesuai dengan group /api di main.go
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api`; // Pastikan sesuai dengan group /api di main.go
 const token = localStorage.getItem('token');
 
 // Modal States
@@ -316,7 +316,7 @@ onMounted(() => {
                                 <tr v-else v-for="room in selectedBuilding.rooms" :key="room.id"
                                     class="border-b last:border-0 hover:bg-gray-50">
                                     <td class="px-4 py-2 font-mono text-xs font-bold text-gray-600">{{ room.room_number
-                                    }}</td>
+                                        }}</td>
                                     <td class="px-4 py-2">{{ room.name }}</td>
                                     <td class="px-4 py-2">Lt. {{ room.floor }}</td>
                                     <td class="px-4 py-2 text-right">

@@ -4,7 +4,7 @@ import axios from 'axios';
 
 const logs = ref([]);
 const isLoading = ref(false);
-const API_URL = 'http://localhost:3000/api';
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api`;
 const token = localStorage.getItem('token');
 
 // --- STATE PAGINASI ---
