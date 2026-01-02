@@ -5,7 +5,7 @@
                 <i class="fa-solid fa-boxes-stacked text-white text-xl"></i>
                 <span class="text-white font-bold text-lg">SIMAN</span>
             </div>
-            <p class="text-sm">© 2024 Sistem Informasi Manajemen Aset. All rights reserved.</p>
+            <p class="text-sm">© 2026 Sistem Informasi Manajemen Aset Negara. All rights reserved. Made with ❤️ by M. Wira Ade Kusuma</p>
             <div class="flex space-x-6">
                 <a href="#" class="hover:text-white transition"><i class="fa-brands fa-github text-xl"></i></a>
                 <a href="#" class="hover:text-white transition"><i class="fa-brands fa-linkedin text-xl"></i></a>
