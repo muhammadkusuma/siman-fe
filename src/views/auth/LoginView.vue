@@ -59,7 +59,7 @@ const handleLogin = async () => {
                 <div class="flex justify-center mb-4">
                     <i class="fa-solid fa-boxes-stacked text-blue-600 text-4xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-900">Selamat Datang Kembali</h2>
+                <h2 class="text-2xl font-bold text-gray-900">Selamat Datang Kembali Test</h2>
                 <p class="text-gray-500 text-sm">Masuk untuk mengelola aset kampus</p>
             </div>
 
